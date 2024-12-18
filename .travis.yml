@@ -1,4 +1,10 @@
 jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: your-build-command
   include:
     - language: node_js
       node_js:
