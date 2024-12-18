@@ -1,0 +1,12 @@
+jobs:
+  include:
+    - language: node_js
+      node_js:
+        - 7
+      before_script:
+        - npm install
+      script: gulp
+    - language: ruby
+      rvm:
+        - 2.2
+      script: "bundle exec jekyll build"

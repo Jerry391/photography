@@ -1,0 +1,27 @@
+# Base configs
+baseurl: "https://jerry391.github.io/"
+#baseurl: "" # Comment the above line and uncomment this to test the website locally
+image_fulls_loc: "/images/fulls"
+image_thumbs_loc: "/images/thumbs"
+google_analytics: "UA-46465113-2"
+
+# UI configs
+title: "Photography by Xiaojian Jerry Chen"
+subtitle: "See the world through my eyes!"
+author: "Xiaojian Chen"
+header:
+ title: "Photography"
+ subtitle: "by Jerry"
+footer:
+ name: "Hey there, my name is Xiaojian Chen"
+ bio: "AI for science and computational biology."
+ github: "Find more information about Xiaojian Chen at <a href=\"https://jerry391.github.io\">his homepage</a> ;)"
+web_design: "AJ"
+# Configure which exif data to display
+# Tag is the actual exif tag, icon is a fontawesome icon. Use JSON notation without line breaks
+exif: '[{"tag": "Model", "icon": "camera-retro"}, {"tag": "FNumber", "icon": "dot-circle-o"}, {"tag": "ExposureTime", "icon": "clock-o"}, {"tag": "ISOSpeedRatings", "icon": "info-circle"}]'
+social_urls:
+  twitter: "https://x.com/CJerry391"
+  instagram: "https://www.instagram.com/xchen279"
+  linkedin: "https://www.linkedin.com/in/xchen279"
+  github: "https://jerry391.github.io"
