@@ -12,6 +12,12 @@ jobs:
       before_script:
         - npm install
       script: gulp
+    - language: bash
+      before_script:
+        - chmod +x thumbs.sh  # 确保脚本具有可执行权限
+      script:
+        - ./thumbs.sh
+
     - language: ruby
       rvm:
         - 2.2
