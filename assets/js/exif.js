@@ -162,7 +162,8 @@
         0x001B : "GPSProcessingMethod",
         0x001C : "GPSAreaInformation",
         0x001D : "GPSDateStamp",
-        0x001E : "GPSDifferential"
+        0x001E : "GPSDifferential",
+        0x001F : "GPSCity"
     };
 
     var StringValues = EXIF.StringValues = {
@@ -341,12 +342,13 @@
         http.send();
     }
 
-    function getImageData(img, callback) {
-        function handleBinaryFile(binFile) {
-            var data = findEXIFinJPEG(binFile);
+    async function getImageData(img, callback) {
+        async function handleBinaryFile(binFile) {
+            var data = await findEXIFinJPEG(binFile);
             var iptcdata = findIPTCinJPEG(binFile);
             img.exifdata = data || {};
             img.iptcdata = iptcdata || {};
+            // console.log('Tag:', data);
             if (callback) {
                 callback.call(img);
             }
@@ -390,7 +392,7 @@
         }
     }
 
-    function findEXIFinJPEG(file) {
+    async function findEXIFinJPEG(file) {
         var dataView = new DataView(file);
 
         if (debug) console.log("Got file of length " + file.byteLength);
@@ -418,7 +420,7 @@
             if (marker == 225) {
                 if (debug) console.log("Found 0xFFE1 marker");
 
-                return readEXIFData(dataView, offset + 4, dataView.getUint16(offset + 2) - 2);
+                return await readEXIFData(dataView, offset + 4, dataView.getUint16(offset + 2) - 2);
 
                 // offset += 2 + file.getShortAt(offset+2, true);
 
@@ -546,6 +548,27 @@
         return tags;
     }
 
+    
+    const API_KEY = "523067cb14084ba8970f4df9860ad8f3"; // Replace with your Google Maps or OpenCage API key
+
+    // Function to fetch city name from GPS coordinates
+    async function getCityFromCoordinates(lat, lon) {
+        const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${API_KEY}`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // 确保 response.json 是有效函数
+        const data = await response.json();
+        // console.log('Data:', data);
+
+        if (data && data.results && data.results[0]) {
+            return data.results[0].components.city || data.results[0].components.town || data.results[0].components.state || data.results[0].components.country || "Unknown City";
+        }
+        return "Unknown City";
+    }
 
     function readTagValue(file, entryOffset, tiffStart, dirStart, bigEnd) {
         var type = file.getUint16(entryOffset+2, !bigEnd),
@@ -648,7 +671,7 @@
         return outstr;
     }
 
-    function readEXIFData(file, start) {
+    async function readEXIFData(file, start) {
         if (getStringFromDB(file, start, 4) != "Exif") {
             if (debug) console.log("Not valid EXIF data! " + getStringFromDB(file, start, 4));
             return false;
@@ -719,6 +742,10 @@
                             StringValues.Components[exifData[tag][2]] +
                             StringValues.Components[exifData[tag][3]];
                         break;
+
+                    case "DateTimeDigitized" :
+                        exifData[tag] = exifData[tag].split(" ")[0].replace(/:/g,"-");
+                        break;
                 }
                 tags[tag] = exifData[tag];
             }
@@ -726,6 +753,11 @@
 
         if (tags.GPSInfoIFDPointer) {
             gpsData = readTags(file, tiffOffset, tiffOffset + tags.GPSInfoIFDPointer, GPSTags, bigEnd);
+            const lat = gpsData.GPSLatitude;
+            const lon = gpsData.GPSLongitude;
+            const latRef = gpsData.GPSLatitudeRef;
+            const lonRef = gpsData.GPSLongitudeRef;
+            
             for (tag in gpsData) {
                 switch (tag) {
                     case "GPSVersionID" :
@@ -734,11 +766,31 @@
                             "." + gpsData[tag][2] +
                             "." + gpsData[tag][3];
                         break;
+                    case "GPSCity" :
+                        // Format GPS coordinates and fetch city name
+                        if (lat && lon) {
+                            const formattedLat = (lat[0] + lat[1] / 60 + lat[2] / 3600) * (latRef === "S" ? -1 : 1);
+                            const formattedLon = (lon[0] + lon[1] / 60 + lon[2] / 3600) * (lonRef === "W" ? -1 : 1);
+    
+                            try {
+                                // Fetch city name using reverse geocoding
+                                const city = await getCityFromCoordinates(formattedLat, formattedLon);
+                                // console.log('City1:', city);
+                                gpsData[tag] = city || "Unknown City";
+                                // console.log('Location:', gpsData[tag]);
+                            } catch (error) {
+                                console.error('Error fetching city name:', error);
+                                gpsData[tag] = "Unknown City";
+                            }
+                        } else {
+                            gpsData[tag] = "No GPS Data";
+                        }
+                        break;
                 }
-                tags[tag] = gpsData[tag];
+                tags[tag] = gpsData[tag]; // 确保处理后的值赋给 tags
             }
         }
-
+        // console.log('ALL Tags:', tags);
         return tags;
     }
 

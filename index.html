@@ -2,6 +2,7 @@
 layout: default
 ---
 
+
 <!-- Wrapper -->
 <div id="wrapper">
 
@@ -16,15 +17,16 @@ layout: default
     </header>
 
     <!-- Main -->
+    {% assign images = site.static_files | sort: "created_time" | reverse %}
     <div id="main" data-exif='{{ site.exif }}'>
-        {% for image in site.static_files %}
+        {% for image in images %}
         {% if image.path contains 'fulls' %}
         <article class="thumb">
             <a href="{{ site.baseurl }}{{ site.image_fulls_loc }}/{{ image.name }}" class="image">
                 <img src="{{ site.baseurl }}{{ site.image_thumbs_loc }}/{{ image.name }}" alt=""
                      data-name="{{ image.name }}"/></a>
-            <!--<h2></h2>
-            <p></p>-->
+            <h2></h2>
+            <p>{{image | inspect}}</p>
         </article>
         {% endif %}
         {% endfor %}
